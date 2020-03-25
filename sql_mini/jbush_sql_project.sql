@@ -71,12 +71,14 @@ FROM Facilities
 /* Q6: You'd like to get the first and last name of the last member(s)
 who signed up. Do not use the LIMIT clause for your solution. */
 
-SELECT m.firstname AS first_name,
-       m.surname AS last_name
-FROM Members m
-JOIN (SELECT MAX(mm.joindate) AS max_date
-	FROM Members mm) t
-ON t.max_date = m.joindate
+SELECT b.firstname AS first_name,
+       b.surname AS last_name
+FROM Members b
+JOIN (SELECT MAX(joindate) AS max_date
+	 FROM Members) a
+ON a.max_date = b.joindate
+WHERE b.joindate = a.max_date
+
 
 /* Q7: How can you produce a list of all members who have used a tennis court?
 Include in your output the name of the court, and the name of the member
@@ -171,6 +173,27 @@ JOIN country_club.Facilities f
 ON f.facid = b.facid
 WHERE f.name LIKE 'Tennis Court%'
 AND ((m.firstname != 'GUEST') OR (m.surname != 'GUEST'))
+ORDER BY member_name
+
+/* Q7B Answer:
+*/
+
+SELECT CONCAT(firstname, ' ', surname) AS member_name,
+       CASE WHEN COUNT(sq.member_id) = 1 THEN sq.fac_name
+	        ELSE 'Tennis Court 1, 2' END AS facility_name
+FROM Members m
+JOIN 
+(
+SELECT DISTINCT memid AS member_id,
+                name AS fac_name
+FROM Bookings b
+JOIN Facilities f
+ON b.facid = f.facid
+WHERE name LIKE 'Tennis Court%'
+AND memid != 0
+) sq
+ON m.memid = sq.member_id
+GROUP BY member_name
 ORDER BY member_name
 
 /* Q8: How can you produce a list of bookings on the day of 2012-09-14 which
